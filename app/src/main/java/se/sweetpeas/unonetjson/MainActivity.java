@@ -21,35 +21,40 @@ import retrofit.http.Path;
 
 public class MainActivity extends ActionBarActivity {
 
-    private final String URI = "https://api.github.com";
+    private final String URI = "http://192.168.0.11";
     private final String TAG = "REST";
 
     RestAdapter restAdapter = null;
-    GitHub github = null;
+    uHTTP uHttp = null;
 
     private ArrayList<String> listItems=new ArrayList<String>();
     private ArrayAdapter<String> adapter;
 
     private ListView list;
 
-    static class Contributor {
-        String login;
-        int contributions;
+    static class IoPin {
+        int id;
+        int pin;
+        int value;
+        int pwm;
     }
 
-    interface GitHub {
-        @GET("/repos/{owner}/{repo}/contributors")
-        List<Contributor> getContributors(
-                @Path("owner") String owner,
-                @Path("repo") String repo
+    interface uHTTP {
+        @GET("/digital")
+        List<IoPin> getAllIoPins();
+
+        @GET("/digital/{id}")
+        List<IoPin> getIoPin(
+                @Path("id") String id
         );
 
-        @PUT("/repos/{owner}/{repo}/contributors")
-        List<Contributor> hansa(
-                @Path("owner") String owner,
-                @Path("repo") String repo
-        );
+        @GET("/analog")
+        List<IoPin> getAllAnalogPins();
 
+        @GET("/analog/{id}")
+        List<IoPin> getAnalogPin(
+                @Path("id") String id
+        );
     }
 
     @Override
@@ -67,9 +72,9 @@ public class MainActivity extends ActionBarActivity {
                 .setEndpoint(URI)
                 .build();
 
-        github = restAdapter.create(GitHub.class);
+        uHttp = restAdapter.create(uHTTP.class);
 
-        new getGitUsers().execute();
+        new getAllIoPins().execute();
     }
 
 
@@ -95,15 +100,18 @@ public class MainActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private class getGitUsers extends AsyncTask<Void, Void, Integer> {
+    //
+    // Get the state of all IO pins
+    //
+    private class getAllIoPins extends AsyncTask<Void, Void, Integer> {
         /** The system calls this to perform work in a worker thread and
          * delivers it the parameters given to AsyncTask.execute() */
         protected Integer doInBackground(Void... a) {
-            List<Contributor> contributors = github.getContributors("square", "retrofit");
+            List<IoPin> ioPins = uHttp.getAllIoPins();
 
-            for (Contributor contributor : contributors) {
-                Log.d(TAG, contributor.login + " (" + contributor.contributions + ")");
-                listItems.add(contributor.login + " (" + contributor.contributions + ")");
+            for (IoPin ioPin : ioPins) {
+                Log.d(TAG, ioPin.id + " (" + ioPin.pin + ") = " + ioPin.value);
+                listItems.add(ioPin.id + " (" + ioPin.pin + ") = " + ioPin.value + ", pwm = " + ioPin.pwm);
             }
             return 0;
         }
